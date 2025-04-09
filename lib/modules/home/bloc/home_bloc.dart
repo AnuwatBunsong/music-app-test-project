@@ -67,6 +67,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     emit(state.copyWith(fetchStatus: FormzSubmissionStatus.inProgress));
+
+    await Future.delayed(const Duration(seconds: 2));
+
     try {
       emit(
         state.copyWith(

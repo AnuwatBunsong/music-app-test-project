@@ -5,6 +5,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:music/modules/home/bloc/home_bloc.dart';
 import 'package:music/modules/music/models/music_model.dart';
 import 'package:music/modules/music/views/cuurrent_music_screen.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class Homepeage extends StatefulWidget {
   const Homepeage({super.key});
@@ -36,67 +37,105 @@ class _HomepeageState extends State<Homepeage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Music List'),
+        title: const Text(
+          'My Playlist',
+          style: TextStyle(
+            fontSize: 23,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: BlocConsumer<HomeBloc, HomeState>(
-        listenWhen: (previous, current) =>
-            previous.fetchStatus != current.fetchStatus,
         listener: (context, state) async {
-          if (state.fetchStatus == FormzSubmissionStatus.success) {
-            playLists = state.playlists;
-          } else if (state.fetchStatus == FormzSubmissionStatus.failure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to fetch playlists')),
-            );
+          switch (state.fetchStatus) {
+            case FormzSubmissionStatus.inProgress:
+              playLists = List.generate(
+                  4,
+                  (index) => Music(
+                        name: 'Loading...',
+                        artist: 'Loading...',
+                        imageUrl: 'assets/images/img_album_1.jpg',
+                        url: 'https://example.com/loading.mp3',
+                      ));
+              break;
+            case FormzSubmissionStatus.success:
+              playLists = state.playlists;
+              break;
+            case FormzSubmissionStatus.failure:
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Failed to fetch music'),
+                ),
+              );
+            default:
+              break;
           }
         },
-        buildWhen: (previous, current) =>
-            previous.fetchStatus != current.fetchStatus,
         builder: (context, state) {
-          return ListView.builder(
-            itemCount: playLists.length,
-            itemBuilder: (context, index) {
-              final Music music = playLists[index];
-              return BlocBuilder<HomeBloc, HomeState>(
-                buildWhen: (previous, current) =>
-                    previous.playStatus != current.playStatus,
-                builder: (context, state) {
-                  return ListTile(
-                    leading: Image.asset(
-                      playLists[index].imageUrl,
-                      width: 70,
-                      height: 70,
-                      fit: BoxFit.cover,
-                    ),
-                    title: Text(music.name),
-                    subtitle: Text(music.artist),
-                    onTap: () {
-                      if (state.playStatus == FormzSubmissionStatus.success) {
-                        homeBloc.add(
-                          StopMusic(
-                            player: player,
-                          ),
-                        );
-                      } else {
-                        homeBloc.add(
-                          PlayMusic(
-                            music: music,
-                            player: player,
-                          ),
-                        );
-                      }
-                    },
-                    trailing: Icon(
-                      state.playStatus == FormzSubmissionStatus.success
-                          ? Icons.pause_circle_outline
-                          : Icons.play_circle_outline,
-                      color: Colors.black,
-                      size: 30,
-                    ),
-                  );
-                },
-              );
-            },
+          return Skeletonizer(
+            enabled: state.fetchStatus == FormzSubmissionStatus.inProgress,
+            child: ListView.builder(
+              itemCount: playLists.length,
+              itemBuilder: (context, index) {
+                final Music music = playLists[index];
+                bool isPlaying = state.currentMusic?.url == music.url &&
+                    state.playStatus == FormzSubmissionStatus.success;
+
+                return BlocBuilder<HomeBloc, HomeState>(
+                  buildWhen: (previous, current) =>
+                      previous.playStatus != current.playStatus,
+                  builder: (context, state) {
+                    return ListTile(
+                      titleAlignment: ListTileTitleAlignment.center,
+                      leading: Image.asset(
+                        music.imageUrl,
+                        width: 70,
+                        height: 70,
+                        fit: BoxFit.cover,
+                      ),
+                      title: Text(
+                        music.name,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Text(
+                        music.artist,
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      onTap: () {
+                        if (isPlaying) {
+                          homeBloc.add(
+                            StopMusic(
+                              player: player,
+                            ),
+                          );
+                        } else {
+                          homeBloc.add(
+                            PlayMusic(
+                              music: music,
+                              player: player,
+                            ),
+                          );
+                        }
+                      },
+                      trailing: Skeleton.shade(
+                          child: Icon(
+                        isPlaying
+                            ? Icons.pause_circle_outline
+                            : Icons.play_circle_outline,
+                        color: isPlaying ? Colors.black : Colors.grey[500],
+                        size: 35,
+                      )),
+                    );
+                  },
+                );
+              },
+            ),
           );
         },
       ),
