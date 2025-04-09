@@ -23,15 +23,15 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     PlayMusic event,
     Emitter<HomeState> emit,
   ) async {
-    emit(state.copyWith(playStatus: FormzSubmissionStatus.inProgress));
-
     try {
       await event.player.setAudioSource(
         AudioSource.uri(
           Uri.parse(event.music.url),
         ),
       );
-
+      unawaited(
+        event.player.play(),
+      );
       emit(
         state.copyWith(
           player: event.player,
@@ -49,6 +49,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
+      await event.player.stop();
       emit(
         state.copyWith(
           player: event.player,
@@ -56,7 +57,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           playStatus: FormzSubmissionStatus.canceled,
         ),
       );
-      event.onStop?.call();
     } catch (e) {
       emit(state.copyWith(playStatus: FormzSubmissionStatus.failure));
     }

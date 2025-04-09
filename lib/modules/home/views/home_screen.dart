@@ -27,6 +27,12 @@ class _HomepeageState extends State<Homepeage> {
   }
 
   @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -51,55 +57,44 @@ class _HomepeageState extends State<Homepeage> {
             itemCount: playLists.length,
             itemBuilder: (context, index) {
               final Music music = playLists[index];
-              return ListTile(
-                leading: Image.asset(
-                  playLists[index].imageUrl,
-                  width: 70,
-                  height: 70,
-                  fit: BoxFit.cover,
-                ),
-                title: Text(music.name),
-                subtitle: Text(music.artist),
-                onTap: () {
-                  if (state.playStatus == FormzSubmissionStatus.success) {
-                    context.read<HomeBloc>().add(
+              return BlocBuilder<HomeBloc, HomeState>(
+                buildWhen: (previous, current) =>
+                    previous.playStatus != current.playStatus,
+                builder: (context, state) {
+                  return ListTile(
+                    leading: Image.asset(
+                      playLists[index].imageUrl,
+                      width: 70,
+                      height: 70,
+                      fit: BoxFit.cover,
+                    ),
+                    title: Text(music.name),
+                    subtitle: Text(music.artist),
+                    onTap: () {
+                      if (state.playStatus == FormzSubmissionStatus.success) {
+                        homeBloc.add(
                           StopMusic(
                             player: player,
                           ),
                         );
-                  } else {
-                    context.read<HomeBloc>().add(
+                      } else {
+                        homeBloc.add(
                           PlayMusic(
                             music: music,
                             player: player,
                           ),
                         );
-                  }
-                },
-                trailing: BlocConsumer<HomeBloc, HomeState>(
-                  listener: (context, state) async {
-                    debugPrint(state.playStatus.toString());
-                    if (state.playStatus == FormzSubmissionStatus.success) {
-                      // await state.player?.play();
-                    } else if (state.playStatus ==
-                        FormzSubmissionStatus.canceled) {
-                      // await state.player?.stop();
-                    } else {
-                      // await state.player?.pause();
-                    }
-                  },
-                  buildWhen: (previous, current) =>
-                      previous.playStatus != current.playStatus,
-                  builder: (context, state) {
-                    return Icon(
+                      }
+                    },
+                    trailing: Icon(
                       state.playStatus == FormzSubmissionStatus.success
                           ? Icons.pause_circle_outline
                           : Icons.play_circle_outline,
                       color: Colors.black,
                       size: 30,
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               );
             },
           );
@@ -111,7 +106,7 @@ class _HomepeageState extends State<Homepeage> {
             return const SizedBox.shrink();
           }
 
-          final Music music = state.currentMusic!;
+          final music = state.currentMusic!;
           return GestureDetector(
             onTap: () {
               _showCurrentMusicPopup(context, music.url);
