@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:formz/formz.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+
 import 'package:music/modules/home/bloc/home_bloc.dart';
 import 'package:music/modules/music/models/music_model.dart';
 import 'package:music/modules/music/views/cuurrent_music_screen.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 
 class Homepeage extends StatefulWidget {
   const Homepeage({super.key});
@@ -50,13 +51,14 @@ class _HomepeageState extends State<Homepeage> {
           switch (state.fetchStatus) {
             case FormzSubmissionStatus.inProgress:
               playLists = List.generate(
-                  4,
-                  (index) => Music(
-                        name: 'Loading...',
-                        artist: 'Loading...',
-                        imageUrl: 'assets/images/img_album_1.jpg',
-                        url: 'https://example.com/loading.mp3',
-                      ));
+                4,
+                (index) => Music(
+                  name: 'Loading...',
+                  artist: 'Loading...',
+                  imageUrl: 'assets/images/img_album_1.jpg',
+                  url: 'https://example.com/loading.mp3',
+                ),
+              );
               break;
             case FormzSubmissionStatus.success:
               playLists = state.playlists;
@@ -85,52 +87,9 @@ class _HomepeageState extends State<Homepeage> {
                   buildWhen: (previous, current) =>
                       previous.playStatus != current.playStatus,
                   builder: (context, state) {
-                    return ListTile(
-                      titleAlignment: ListTileTitleAlignment.center,
-                      leading: Image.asset(
-                        music.imageUrl,
-                        width: 70,
-                        height: 70,
-                        fit: BoxFit.cover,
-                      ),
-                      title: Text(
-                        music.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Text(
-                        music.artist,
-                        style: TextStyle(
-                          fontSize: 15,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      onTap: () {
-                        if (isPlaying) {
-                          homeBloc.add(
-                            StopMusic(
-                              player: player,
-                            ),
-                          );
-                        } else {
-                          homeBloc.add(
-                            PlayMusic(
-                              music: music,
-                              player: player,
-                            ),
-                          );
-                        }
-                      },
-                      trailing: Skeleton.shade(
-                          child: Icon(
-                        isPlaying
-                            ? Icons.pause_circle_outline
-                            : Icons.play_circle_outline,
-                        color: isPlaying ? Colors.black : Colors.grey[500],
-                        size: 35,
-                      )),
+                    return _buildPlaylist(
+                      music,
+                      isPlaying,
                     );
                   },
                 );
@@ -139,49 +98,178 @@ class _HomepeageState extends State<Homepeage> {
           );
         },
       ),
-      bottomSheet: BlocBuilder<HomeBloc, HomeState>(
-        builder: (context, state) {
-          if (state.currentMusic == null) {
-            return const SizedBox.shrink();
-          }
+      bottomSheet: BlocBuilder<HomeBloc, HomeState>(builder: (context, state) {
+        if (state.currentMusic == null ||
+            state.playStatus == FormzSubmissionStatus.inProgress) {
+          return const SizedBox.shrink();
+        }
+        final music = state.currentMusic!;
 
-          final music = state.currentMusic!;
-          return GestureDetector(
-            onTap: () {
-              _showCurrentMusicPopup(context, music.url);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-              color: Colors.black,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    music.name,
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  Icon(
-                    state.playStatus == FormzSubmissionStatus.success
-                        ? Icons.pause_circle_outline
-                        : Icons.play_circle_outline,
-                    color: Colors.white,
-                  ),
-                ],
-              ),
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildProgressBar(player),
+            _buildCurrentMusic(
+              music: music,
+              isPlaying: state.playStatus == FormzSubmissionStatus.success,
             ),
-          );
+          ],
+        );
+      }),
+    );
+  }
+
+  Widget _buildPlaylist(
+    Music music,
+    bool isPlaying,
+  ) {
+    return Container(
+      margin: const EdgeInsets.all(10),
+      child: ListTile(
+        titleAlignment: ListTileTitleAlignment.center,
+        leading: Image.asset(
+          music.imageUrl,
+          width: 70,
+          height: 70,
+          fit: BoxFit.cover,
+        ),
+        title: Text(
+          music.name,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Text(
+          music.artist,
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.grey[600],
+          ),
+        ),
+        onTap: () {
+          isPlaying
+              ? homeBloc.add(StopMusic(player: player))
+              : homeBloc.add(PlayMusic(music: music, player: player));
         },
+        trailing: Skeleton.shade(
+          child: Icon(
+            isPlaying ? Icons.pause_circle_outline : Icons.play_circle_outline,
+            color: isPlaying ? Colors.black : Colors.grey[500],
+            size: 35,
+          ),
+        ),
       ),
     );
   }
 
-  void _showCurrentMusicPopup(BuildContext context, String? songUrl) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return const CurrentMusicPopup();
+  Widget _buildProgressBar(
+    AudioPlayer player,
+  ) {
+    return StreamBuilder<Duration>(
+      stream: player.positionStream,
+      builder: (context, snapshot) {
+        final position = snapshot.data ?? Duration.zero;
+        final duration = player.duration ?? Duration.zero;
+        final progress = position.inMilliseconds.toDouble();
+        final total = duration.inMilliseconds.toDouble();
+
+        return SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 4.0,
+            trackShape: const RoundedRectSliderTrackShape(),
+            thumbShape: const RoundSliderThumbShape(
+              enabledThumbRadius: 0.0,
+            ),
+            thumbColor: Colors.transparent,
+            activeTrackColor: Colors.yellow[700],
+            inactiveTrackColor: Colors.grey[300],
+          ),
+          child: SizedBox(
+            height: 4.0,
+            child: Slider(
+              value: progress,
+              min: 0,
+              max: total,
+              activeColor: Colors.yellow[700],
+              semanticFormatterCallback: (value) => value.toString(),
+              onChanged: (value) =>
+                  player.seek(Duration(milliseconds: value.toInt())),
+            ),
+          ),
+        );
       },
+    );
+  }
+
+  Widget _buildCurrentMusic({
+    required Music music,
+    required bool isPlaying,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        vertical: 10,
+        horizontal: 20,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              builder: (BuildContext context) => const CurrentMusicPopup(),
+            ),
+            child: Row(
+              children: [
+                Image.asset(
+                  music.imageUrl,
+                  width: 70,
+                  height: 70,
+                  fit: BoxFit.cover,
+                ),
+                const SizedBox(
+                  width: 10,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      music.name,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      music.artist,
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              isPlaying
+                  ? homeBloc.add(StopMusic(player: player))
+                  : homeBloc.add(PlayMusic(music: music, player: player));
+            },
+            child: Icon(
+              isPlaying ? Icons.pause : Icons.play_arrow,
+              color: Colors.black,
+              size: 40,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
