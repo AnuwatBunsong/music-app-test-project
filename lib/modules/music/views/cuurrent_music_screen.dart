@@ -6,7 +6,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:music/modules/home/bloc/home_bloc.dart';
 import 'package:music/modules/home/views/home_screen.dart';
 import 'package:music/modules/music/models/music_model.dart';
-import 'package:music/modules/music/views/tab_lyrics_next_screen.dart';
+import 'package:music/modules/music/views/tab_base_screen.dart';
 
 class CurrentMusicPopup extends StatelessWidget {
   const CurrentMusicPopup({
@@ -165,7 +165,7 @@ class CurrentMusicPopup extends StatelessWidget {
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
                         builder: (BuildContext context) =>
-                            const TabsLyricsNextScreen(),
+                            const TabsBaseScreen(),
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,

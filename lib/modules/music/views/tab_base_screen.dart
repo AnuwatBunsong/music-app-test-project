@@ -7,14 +7,14 @@ import 'package:music/modules/home/bloc/home_bloc.dart';
 import 'package:music/modules/home/views/home_screen.dart';
 import 'package:music/modules/music/models/music_model.dart';
 
-class TabsLyricsNextScreen extends StatefulWidget {
-  const TabsLyricsNextScreen({super.key});
+class TabsBaseScreen extends StatefulWidget {
+  const TabsBaseScreen({super.key});
 
   @override
-  State<TabsLyricsNextScreen> createState() => _TabsLyricsNextScreenState();
+  State<TabsBaseScreen> createState() => _TabsBaseScreenState();
 }
 
-class _TabsLyricsNextScreenState extends State<TabsLyricsNextScreen>
+class _TabsBaseScreenState extends State<TabsBaseScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
 
