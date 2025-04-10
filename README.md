@@ -8,7 +8,7 @@ This project is a **Flutter** based music application designed to play audio, di
 - **Dart version**: 3.3.3
 - **Gradle version**: 8.13
 - **Android Studio**: Pixel 9 Pro (Android 16.0, x86_64)
-- **Operating System**: Windows 10.0.26100.3624 (locale: en-US)
+- **Operating System**: Windows 11
 
 ## How to Run the Project
 
