@@ -16,8 +16,8 @@ To run this project, you need to set up an emulator or connect a physical device
 
 Steps:
 
-1. Open Android Studio.
-2. Select **Pixel 9 Pro** in the device list.
+1. Open the Visual Studio Code or IDE that you prefer.
+2. Select **Pixel 9 Pro** in the **Android studio** to be a simulated device.
 3. Run the project in **debug mode**.
 
 ## Project Structure
