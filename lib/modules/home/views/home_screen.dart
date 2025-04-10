@@ -127,11 +127,10 @@ class _HomepeageState extends State<Homepeage> {
       margin: const EdgeInsets.all(10),
       child: ListTile(
         titleAlignment: ListTileTitleAlignment.center,
-        leading: Image.asset(
-          music.imageUrl,
+        leading: buildImage(
+          imageUrl: music.imageUrl,
           width: 70,
           height: 70,
-          fit: BoxFit.cover,
         ),
         title: Text(
           music.name,
@@ -174,6 +173,11 @@ class _HomepeageState extends State<Homepeage> {
         final progress = position.inMilliseconds.toDouble();
         final total = duration.inMilliseconds.toDouble();
 
+        if (progress > total) {
+          homeBloc.add(StopMusic(player: player));
+          return const SizedBox.shrink();
+        }
+
         return SliderTheme(
           data: SliderTheme.of(context).copyWith(
             trackHeight: 4.0,
@@ -192,9 +196,9 @@ class _HomepeageState extends State<Homepeage> {
               min: 0,
               max: total,
               activeColor: Colors.yellow[700],
-              semanticFormatterCallback: (value) => value.toString(),
-              onChanged: (value) =>
-                  player.seek(Duration(milliseconds: value.toInt())),
+              onChanged: (value) {
+                player.seek(Duration(milliseconds: value.toInt()));
+              },
             ),
           ),
         );
@@ -221,15 +225,15 @@ class _HomepeageState extends State<Homepeage> {
             onTap: () => showModalBottomSheet(
               context: context,
               isScrollControlled: true,
+              backgroundColor: const Color.fromRGBO(45, 83, 114, 1),
               builder: (BuildContext context) => const CurrentMusicPopup(),
             ),
             child: Row(
               children: [
-                Image.asset(
-                  music.imageUrl,
+                buildImage(
+                  imageUrl: music.imageUrl,
                   width: 70,
                   height: 70,
-                  fit: BoxFit.cover,
                 ),
                 const SizedBox(
                   width: 10,
@@ -272,4 +276,22 @@ class _HomepeageState extends State<Homepeage> {
       ),
     );
   }
+}
+
+Widget buildImage({
+  required String imageUrl,
+  double width = 70,
+  double height = 70,
+}) {
+  return Container(
+    width: width,
+    height: height,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(5),
+      image: DecorationImage(
+        image: AssetImage(imageUrl),
+        fit: BoxFit.cover,
+      ),
+    ),
+  );
 }
