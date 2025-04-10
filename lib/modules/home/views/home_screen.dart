@@ -59,6 +59,7 @@ class _HomepeageState extends State<Homepeage> {
                   url: 'https://example.com/loading.mp3',
                 ),
               );
+
               break;
             case FormzSubmissionStatus.success:
               playLists = state.playlists;
@@ -260,13 +261,13 @@ class _HomepeageState extends State<Homepeage> {
               ],
             ),
           ),
-          GestureDetector(
-            onTap: () {
+          IconButton(
+            onPressed: () {
               isPlaying
                   ? homeBloc.add(StopMusic(player: player))
                   : homeBloc.add(PlayMusic(music: music, player: player));
             },
-            child: Icon(
+            icon: Icon(
               isPlaying ? Icons.pause : Icons.play_arrow,
               color: Colors.black,
               size: 40,

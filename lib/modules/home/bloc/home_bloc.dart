@@ -4,7 +4,7 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:formz/formz.dart';
 import 'package:just_audio/just_audio.dart';
-import 'package:music/modules/home/repository/home.dart';
+import 'package:music/modules/music/repository/music_repository.dart';
 import 'package:music/modules/music/models/music_model.dart';
 
 part 'home_event.dart';
@@ -17,7 +17,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<FetchMusic>(_onFetchMusic);
   }
 
-  HomeRepository get repository => HomeRepository();
+  MusicRepository get repository => MusicRepository();
 
   Future<void> _onPlayMusic(
     PlayMusic event,

@@ -1,6 +1,6 @@
 import 'package:music/modules/music/models/music_model.dart';
 
-class HomeRepository {
+class MusicRepository {
   List<Music> getPlaylistTracks() {
     final List<Music> tracks = [
       Music(
